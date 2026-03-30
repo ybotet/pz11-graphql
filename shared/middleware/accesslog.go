@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ybotet/pz6_csrf_xss/shared/logger"
+	"github.com/ybotet/pz8-pipelineCICD-go/shared/logger"
 )
 
 // responseWriter es un wrapper que captura el código de estado

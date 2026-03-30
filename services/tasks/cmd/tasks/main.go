@@ -5,13 +5,13 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"github.com/ybotet/pz6_csrf_xss/services/tasks/internal/clients"
-	"github.com/ybotet/pz6_csrf_xss/services/tasks/internal/handlers"
-	"github.com/ybotet/pz6_csrf_xss/services/tasks/internal/repository"
+	"github.com/ybotet/pz8-pipelineCICD-go/services/tasks/internal/clients"
+	"github.com/ybotet/pz8-pipelineCICD-go/services/tasks/internal/handlers"
+	"github.com/ybotet/pz8-pipelineCICD-go/services/tasks/internal/repository"
 
-	internalMiddleware "github.com/ybotet/pz6_csrf_xss/services/tasks/internal/middleware"
-	"github.com/ybotet/pz6_csrf_xss/shared/logger"
-	"github.com/ybotet/pz6_csrf_xss/shared/middleware"
+	internalMiddleware "github.com/ybotet/pz8-pipelineCICD-go/services/tasks/internal/middleware"
+	"github.com/ybotet/pz8-pipelineCICD-go/shared/logger"
+	"github.com/ybotet/pz8-pipelineCICD-go/shared/middleware"
 )
 
 func main() {

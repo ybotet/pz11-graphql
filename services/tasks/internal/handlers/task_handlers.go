@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/ybotet/pz6_csrf_xss/services/tasks/internal/middleware" // Para GetUserID
-	"github.com/ybotet/pz6_csrf_xss/services/tasks/internal/repository"
-	"github.com/ybotet/pz6_csrf_xss/shared/models"
+	"github.com/ybotet/pz8-pipelineCICD-go/services/tasks/internal/middleware" // Para GetUserID
+	"github.com/ybotet/pz8-pipelineCICD-go/services/tasks/internal/repository"
+	"github.com/ybotet/pz8-pipelineCICD-go/shared/models"
 )
 
 type TaskHandler struct {

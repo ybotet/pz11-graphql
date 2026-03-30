@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package auth;
 
-option go_package = "github.com/ybotet/pz6_csrf_xss/gen/proto/auth";
+option go_package = "github.com/ybotet/pz8-pipelineCICD-go/gen/proto/auth";
 
 service AuthService {
   rpc Verify(VerifyRequest) returns (VerifyResponse);

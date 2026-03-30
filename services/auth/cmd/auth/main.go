@@ -11,10 +11,10 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/ybotet/pz6_csrf_xss/services/auth/internal/auth"
-	grpcserver "github.com/ybotet/pz6_csrf_xss/services/auth/internal/grpc"
-	httpserver "github.com/ybotet/pz6_csrf_xss/services/auth/internal/http"
-	"github.com/ybotet/pz6_csrf_xss/shared/logger"
+	"github.com/ybotet/pz8-pipelineCICD-go/services/auth/internal/auth"
+	grpcserver "github.com/ybotet/pz8-pipelineCICD-go/services/auth/internal/grpc"
+	httpserver "github.com/ybotet/pz8-pipelineCICD-go/services/auth/internal/http"
+	"github.com/ybotet/pz8-pipelineCICD-go/shared/logger"
 )
 
 func main() {

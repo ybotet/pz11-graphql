@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	authpb "github.com/ybotet/pz6_csrf_xss/gen/proto/auth"
+	authpb "github.com/ybotet/pz8-pipelineCICD-go/gen/proto/auth"
 )
 
 type contextKey string

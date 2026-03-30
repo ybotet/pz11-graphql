@@ -1,11 +1,11 @@
 ﻿package repository
 
 import (
-    "database/sql"
-    "fmt"
-    "os"
-    
-    _ "github.com/lib/pq"
+	"database/sql"
+	"fmt"
+	"os"
+
+	_ "github.com/lib/pq"
 )
 
 func NewPostgresConnection() (*sql.DB, error) {

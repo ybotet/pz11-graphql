@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	authpb "github.com/ybotet/pz6_csrf_xss/gen/proto/auth"
+	authpb "github.com/ybotet/pz8-pipelineCICD-go/gen/proto/auth"
 )
 
 type AuthClient struct {

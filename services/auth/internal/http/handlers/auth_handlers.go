@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus" // IMPORTANTE: importar logrus
-	"github.com/ybotet/pz6_csrf_xss/services/auth/internal/auth"
-	httpModels "github.com/ybotet/pz6_csrf_xss/services/auth/internal/http/models"
+	"github.com/ybotet/pz8-pipelineCICD-go/services/auth/internal/auth"
+	httpModels "github.com/ybotet/pz8-pipelineCICD-go/services/auth/internal/http/models"
 )
 
 type AuthHandler struct {

@@ -7,9 +7,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
-	"github.com/ybotet/pz6_csrf_xss/services/auth/internal/auth"
-	"github.com/ybotet/pz6_csrf_xss/services/auth/internal/http/handlers"
-	"github.com/ybotet/pz6_csrf_xss/shared/middleware" // Tus middlewares
+	"github.com/ybotet/pz8-pipelineCICD-go/services/auth/internal/auth"
+	"github.com/ybotet/pz8-pipelineCICD-go/services/auth/internal/http/handlers"
+	"github.com/ybotet/pz8-pipelineCICD-go/shared/middleware" // Tus middlewares
 )
 
 type Server struct {

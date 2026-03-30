@@ -1,4 +1,4 @@
-module github.com/ybotet/pz6_csrf_xss
+module github.com/ybotet/pz8-pipelineCICD-go
 
 go 1.25.1
 
@@ -8,7 +8,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/lib/pq v1.11.2
 	github.com/sirupsen/logrus v1.9.4
-	github.com/ybotet/pz6_csrf_xss/gen v0.0.0-00010101000000-000000000000
+	github.com/ybotet/pz8-pipelineCICD-go/gen v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.79.1
 )
 
@@ -21,4 +21,4 @@ require (
 )
 
 // Si tienes código generado en /gen, mantenemos el replace
-replace github.com/ybotet/pz6_csrf_xss/gen => ./gen
+replace github.com/ybotet/pz8-pipelineCICD-go/gen => ./gen
