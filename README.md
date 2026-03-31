@@ -1,233 +1,360 @@
-# PZ7-DOCKER-GO
+# Практическая работа №8: CI/CD Pipeline с GitHub Actions
 
-## Оглавление
+## Содержание
 
-1. [Описание проекта](#1-описание-проекта)
-2. [Структура проекта](#2-структура-проекта)
-3. [Dockerfile для сервиса auth](#3-dockerfile-для-сервиса-auth)
-   - 3.1. Содержимое Dockerfile
-   - 3.2. Пояснение стадий сборки
-4. [Dockerfile для сервиса tasks](#4-dockerfile-для-сервиса-tasks)
-   - 4.1. Содержимое Dockerfile
-   - 4.2. Пояснение стадий сборки
-5. [.dockerignore](#5-dockerignore)
-6. [Docker Compose](#6-docker-compose)
-   - 6.1. Полный файл docker-compose.yml
-   - 6.2. Описание сервисов
-   - 6.3. Сеть Docker
-7. [Переменные окружения](#7-переменные-окружения)
-8. [Команды для сборки и запуска](#8-команды-для-сборки-и-запуска)
-9. [Проверка работоспособности](#9-проверка-работоспособности)
-10. [Контрольные вопросы](#11-контрольные-вопросы)
+1. [Описание работы](#1-описание-работы)
+2. [Установка и настройка](#2-установка-и-настройка)
+3. [Структура проекта](#3-структура-проекта)
+4. [Pipeline CI/CD](#4-pipeline-cicd)
+   - 4.1. Файл пайплайна
+   - 4.2. Описание Jobs
+5. [Публикация в реестре](#5-публикация-в-реестре)
+6. [Стратегия версионирования](#6-стратегия-версионирования)
+7. [Скриншоты выполнения](#7-скриншоты-выполнения)
+8. [Контрольные вопросы](#8-контрольные-вопросы)
 
 ---
 
-## 1. Описание проекта
+## 1. Описание работы
 
-Данный проект представляет собой контейнеризацию двух микросервисов — **auth** (сервис аутентификации) и **tasks** (сервис управления задачами), а также вспомогательных компонентов: базы данных PostgreSQL и прокси-сервера nginx с поддержкой HTTPS.
+Данная практическая работа заключается в настройке **CI/CD пайплайна** с использованием **GitHub Actions**. Цель — автоматизировать процесс проверки, сборки и публикации Docker-образов микросервисов `auth` и `tasks`.
 
-Проект демонстрирует:
+### Достигнутые цели
 
-- Использование multi-stage сборки для Go-приложений
-- Организацию взаимодействия между контейнерами в единой сети
-- Настройку reverse proxy с SSL-терминацией
-- Управление конфигурацией через переменные окружения
-- Запуск всей инфраструктуры с помощью Docker Compose
+| Цель                                                  |
+| ----------------------------------------------------- |
+| Настройка пайплайна с проверкой компиляции            |
+| Сборка Docker-образов в CI                            |
+| Публикация образов в GitHub Container Registry (GHCR) |
+| Реализация автоматического версионирования            |
+| Использование секретов CI для аутентификации          |
 
-**Технологии:** Docker, Docker Compose, Go, PostgreSQL, nginx, gRPC, JWT.
+### Используемые технологии
 
----
-
-## 2. Структура проекта
-
-![alt text](<public/Снимок экрана 2026-03-27 004752.png>)
-
----
-
-## 3. Dockerfile для сервиса auth
-
-### 3.1. Содержимое Dockerfile
-
-**Путь:** `services/auth/Dockerfile`
-
-![alt text](<public/Снимок экрана 2026-03-27 005159.png>)
-
-### 3.2. Пояснение стадий сборки
-
-| Стадия      | Образ                | Назначение                                                                                                                |
-| ----------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **builder** | `golang:1.25-alpine` | Содержит компилятор Go и все инструменты для сборки. Здесь происходит загрузка зависимостей и компиляция бинарного файла. |
-| **runner**  | `alpine:latest`      | Минимальный образ Linux (~5 МБ). Содержит только скомпилированный бинарник и CA-сертификаты.                              |
-
-**Преимущества multi-stage build:**
-
-- Итоговый образ занимает ~15 МБ вместо ~300 МБ
-- В финальный образ не попадают исходные коды и инструменты компиляции
-- Повышается безопасность за счет уменьшения векторов атак
-- Ускоряется сборка благодаря кэшированию зависимостей
+- **CI/CD:** GitHub Actions
+- **Язык:** Go 1.25
+- **Контейнеризация:** Docker
+- **Реестр:** GitHub Container Registry (ghcr.io)
 
 ---
 
-## 4. Dockerfile для сервиса tasks
+## 2. Установка и настройка
 
-### 4.1. Содержимое Dockerfile
+### Требования
 
-**Путь:** `services/tasks/Dockerfile`
+- Репозиторий на GitHub
+- Docker (для локального тестирования)
+- Go 1.25 (для разработки)
 
-![alt text](<public/Снимок экрана 2026-03-27 005816.png>)
+### Настройка пайплайна
 
-### 4.2. Пояснение стадий сборки
+Пайплайн активируется автоматически при каждом **push** или **pull request** в ветки `main`, `master` и `develop`.
 
-Аналогично сервису auth, используется двухстадийная сборка. Это обеспечивает:
+Для публикации в GHCR не требуются дополнительные секреты, так как GitHub Actions автоматически предоставляет токен `GITHUB_TOKEN` с правами на запись.
 
-- Единообразие процесса сборки для всех Go-сервисов
-- Возможность переиспользования кэша зависимостей
-- Минимальный размер финального образа
-- Независимость от версий Go на хост-машине
+### Разрешения
 
-## 5. .dockerignore
-
-**Путь:** `services/auth/.dockerignore и services/tasks/.dockerignore`
-
-```text
-.git
-*.log
-bin/
-tmp/
-*.exe
-*.test
-coverage.txt
-.idea/
-.vscode/
+```yaml
+permissions:
+  contents: read
+  packages: write
 ```
 
-Назначение: исключает из контекста сборки ненужные файлы (логи, бинарники, служебные папки), что ускоряет сборку и уменьшает размер контекста, передаваемого демону Docker. Также предотвращает случайное попадание в образ чувствительных данных.
+## 3. Структура проекта
 
-## 6. Docker Compose
+![alt text](<public/Снимок экрана 2026-03-31 152009.png>)
 
-### 6.1. Полный файл docker-compose.yml
+## 4. Pipeline CI/CD
 
-**Путь:** `deploy/docker-compose.yml`
+### 4.1. Файл пайплайна
 
-![alt text](<public/Снимок экрана 2026-03-27 010311.png>)
+Путь: .github/workflows/ci.yml
 
-![alt text](<public/Снимок экрана 2026-03-27 010321.png>)
+```yaml
+name: CI/CD Pipeline
 
-![alt text](<public/Снимок экрана 2026-03-27 010327.png>)
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
 
-![alt text](<public/Снимок экрана 2026-03-27 010337.png>)
+env:
+  GO_VERSION: "1.25"
+  REGISTRY: ghcr.io
+  IMAGE_NAME_AUTH: ${{ github.repository }}/auth
+  IMAGE_NAME_TASKS: ${{ github.repository }}/tasks
 
-## 6.2. Descripción de servicios
+jobs:
+  # ========== JOB 1: VERIFICACIÓN DE COMPILACIÓN (CI) ==========
+  verify-build:
+    runs-on: ubuntu-latest
 
-| Servicio | Imagen                      | Propósito                                      | Puertos                   |
-| -------- | --------------------------- | ---------------------------------------------- | ------------------------- |
-| postgres | postgres:15                 | Base de datos para almacenar usuarios y tareas | 5432                      |
-| auth     | construido desde Dockerfile | Servicio de autenticación (JWT, gRPC)          | 8081 (HTTP), 50051 (gRPC) |
-| tasks    | construido desde Dockerfile | Servicio de gestión de tareas                  | 8082                      |
-| nginx    | nginx:alpine                | Reverse proxy con HTTPS                        | 8443                      |
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-## 6.3. Red Docker
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
 
-Todos los servicios están unidos en una red personalizada `pz7-network` con driver `bridge`. Esto permite que los contenedores se comuniquen entre sí por el nombre del servicio, en lugar de por dirección IP. Docker Compose configura automáticamente un servidor DNS integrado que resuelve los nombres de los servicios en las direcciones IP de los contenedores correspondientes.
+      - name: Download dependencies (root)
+        run: go mod download
 
-## 7. Variables de entorno
+      - name: Download dependencies (gen)
+        run: go mod download
+        working-directory: ./gen
 
-### Servicio auth
+      - name: Verify auth service compiles
+        run: go build -o /dev/null ./services/auth/cmd/auth/...
 
-| Variable         | Valor                                | Propósito                     |
-| ---------------- | ------------------------------------ | ----------------------------- |
-| `AUTH_HTTP_PORT` | 8081                                 | Puerto para solicitudes HTTP  |
-| `AUTH_GRPC_PORT` | 50051                                | Puerto para solicitudes gRPC  |
-| `JWT_SECRET`     | your-secret-key-change-in-production | Clave secreta para firmar JWT |
+      - name: Verify tasks service compiles
+        run: go build -o /dev/null ./services/tasks/cmd/tasks/...
 
-### Servicio tasks
+      - name: Verify shared package compiles
+        run: go build -o /dev/null ./shared/...
 
-| Variable         | Valor      | Propósito                                                     |
-| ---------------- | ---------- | ------------------------------------------------------------- |
-| `AUTH_GRPC_ADDR` | auth:50051 | Dirección del servidor gRPC de auth (por nombre del servicio) |
-| `TASKS_PORT`     | 8082       | Puerto para solicitudes HTTP                                  |
-| `DB_HOST`        | postgres   | Host de la base de datos (por nombre del servicio)            |
-| `DB_PORT`        | 5432       | Puerto de PostgreSQL                                          |
-| `DB_USER`        | tasksuser  | Usuario de la base de datos                                   |
-| `DB_PASSWORD`    | taskspass  | Contraseña de la base de datos                                |
-| `DB_NAME`        | tasksdb    | Nombre de la base de datos                                    |
-| `DB_SSLMODE`     | disable    | Deshabilitar SSL para la conexión a la base de datos          |
+  # ========== JOB 2: DOCKER BUILD Y PUBLISH (CD) ==========
+  docker-build-push:
+    needs: verify-build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
-## 8. Команды для сборки и запуска
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-### Сборка всех образов и запуск контейнеров:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ===== Build and push AUTH service =====
+      - name: Extract metadata for auth
+        id: meta_auth
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_AUTH }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+            type=ref,event=branch
+
+      - name: Build and push auth image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./services/auth/Dockerfile
+          push: true
+          tags: ${{ steps.meta_auth.outputs.tags }}
+          labels: ${{ steps.meta_auth.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ===== Build and push TASKS service =====
+      - name: Extract metadata for tasks
+        id: meta_tasks
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_TASKS }}
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+            type=ref,event=branch
+
+      - name: Build and push tasks image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./services/tasks/Dockerfile
+          push: true
+          tags: ${{ steps.meta_tasks.outputs.tags }}
+          labels: ${{ steps.meta_tasks.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Show published images info
+        run: |
+          echo " Auth image published: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_AUTH }}"
+          echo "   Tags: ${{ steps.meta_auth.outputs.tags }}"
+          echo ""
+          echo " Tasks image published: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_TASKS }}"
+          echo "   Tags: ${{ steps.meta_tasks.outputs.tags }}"
+```
+
+### 4.2. Описание Jobs
+
+Job 1: verify-build (Непрерывная интеграция)
+
+| Шаг                    | Описание                                                |
+| ---------------------- | ------------------------------------------------------- |
+| checkout               | Получение кода из репозитория                           |
+| setup-go               | Установка Go версии 1.25 с кэшированием                 |
+| go mod download (root) | Загрузка зависимостей главного модуля                   |
+| go mod download (gen)  | Загрузка зависимостей сгенерированного модуля           |
+| verify auth            | Компиляция сервиса auth для проверки отсутствия ошибок  |
+| verify tasks           | Компиляция сервиса tasks для проверки отсутствия ошибок |
+| verify shared          | Компиляция общего пакета                                |
+
+Job 2: docker-build-push (Непрерывная доставка)
+
+| Шаг                | Описание                                                                 |
+| ------------------ | ------------------------------------------------------------------------ |
+| checkout           | Получение кода из репозитория                                            |
+| setup-buildx       | Настройка Docker Buildx для оптимизированной сборки                      |
+| login to GHCR      | Аутентификация в GitHub Container Registry с использованием GITHUB_TOKEN |
+| metadata auth      | Генерация тегов для образа auth (latest, sha, branch)                    |
+| build & push auth  | Сборка и публикация образа auth в GHCR                                   |
+| metadata tasks     | Генерация тегов для образа tasks                                         |
+| build & push tasks | Сборка и публикация образа tasks в GHCR                                  |
+
+## 5. Публикация в реестре
+
+Образы публикуются в **GitHub Container Registry (GHCR)**.
+
+### Опубликованные образы
+
+| Сервис | Образ                                      |
+| ------ | ------------------------------------------ |
+| Auth   | `ghcr.io/ybotet/pz8-pipelinecicd-go/auth`  |
+| Tasks  | `ghcr.io/ybotet/pz8-pipelinecicd-go/tasks` |
+
+### Загрузка образов
 
 ```bash
+# Auth
+docker pull ghcr.io/ybotet/pz8-pipelinecicd-go/auth:latest
+docker pull ghcr.io/ybotet/pz8-pipelinecicd-go/auth:29fc91a
 
-cd deploy
-docker-compose up -d --build
+# Tasks
+docker pull ghcr.io/ybotet/pz8-pipelinecicd-go/tasks:latest
+docker pull ghcr.io/ybotet/pz8-pipelinecicd-go/tasks:29fc91a
 ```
 
-### Остановка всех контейнеров:
+## 6. Стратегия версионирования
 
-```bash
-docker-compose down
-```
+Каждый образ получает несколько тегов, автоматически генерируемых **docker/metadata-action**:
 
-### Просмотр статуса контейнеров:
+| Тег                      | Условие              | Назначение                                                                                          |
+| ------------------------ | -------------------- | --------------------------------------------------------------------------------------------------- |
+| `<short-hash>` (29fc91a) | Всегда               | Точная версия коммита. Обеспечивает прослеживаемость и возможность развертывания конкретной версии. |
+| `latest`                 | Только в main/master | Последняя стабильная версия для сред разработки и тестирования.                                     |
+| `<branch-name>` (main)   | Всегда               | Например: main или develop. Позволяет идентифицировать ветку происхождения.                         |
 
-```bash
+### Преимущества
 
-docker-compose ps
-```
+- **Прослеживаемость**: Каждый образ привязан к конкретному коммиту.
+- **Воспроизводимость**: Возможность развернуть конкретную версию по хешу.
+- **Простота**: Тег `latest` упрощает разработку.
 
-### Просмотр логов:
+## 7. Скриншоты выполнения
 
-```bash
+Успешное выполнение пайплайна в **GitHub Actions**.
 
-# Логи всех сервисов
-docker-compose logs -f
+![alt text](<public/Снимок экрана 2026-03-31 145510.png>)
 
-# Логи конкретного сервиса
-docker-compose logs auth --tail 20
-docker-compose logs tasks --tail 20
-docker-compose logs nginx --tail 20
-```
+Детали job verify-build
 
-## 9. Проверка работоспособности
+![alt text](<public/Снимок экрана 2026-03-31 151055.png>)
 
-![alt text](<public/Снимок экрана 2026-03-16 030221.png>)
+Детали job docker-build-push
 
-![alt text](<public/Снимок экрана 2026-03-16 035442.png>)
+![alt text](<public/Снимок экрана 2026-03-31 151111.png>)
 
----
+Опубликованные пакеты в GHCR
 
-## 10. Контрольные вопросы
+![alt text](<public/Снимок экрана 2026-03-31 145803.png>)
 
-1. Чем отличается Docker image от container?
+## 8. Контрольные вопросы
 
-Docker image — это неизменяемый шаблон (образ), содержащий всё необходимое для запуска приложения: операционную систему, зависимости, код и настройки. Он доступен только для чтения и может храниться в реестре (Docker Hub). Docker container — это запущенный экземпляр образа. Контейнер имеет собственное изолированное окружение, файловую систему (слой записи поверх образа) и существует только во время выполнения. Один образ может породить множество контейнеров.
+### 1. Чем CI отличается от CD?
 
-2. Зачем нужен multi-stage build?
+CI (Непрерывная интеграция) — это практика частого объединения изменений кода в общем репозитории. Каждое объединение автоматически проверяется с помощью тестов и анализа. В данном пайплайне job `verify-build` представляет часть CI, так как проверяет, что код компилируется без ошибок.
 
-Multi-stage build позволяет создавать небольшие и безопасные образы. В первой стадии (builder) используются все инструменты для компиляции (Go, компилятор, зависимости), а во второй (runner) копируется только скомпилированный бинарник в минимальный образ (Alpine). Это уменьшает размер финального образа с сотен мегабайт до 10-20 МБ, исключает из финального образа исходный код и утилиты сборки, что повышает безопасность, и ускоряет развертывание за счет меньшего объема данных для передачи.
+CD (Непрерывная доставка / развертывание) — это расширение CI, автоматизирующее доставку программного обеспечения. Различают:
 
-3. Почему нельзя хранить секреты внутри Dockerfile?
+- Непрерывная доставка: код готов к развертыванию, но требуется ручное утверждение.
+- Непрерывное развертывание: каждое изменение, прошедшее проверки, автоматически развертывается в production.
 
-Секреты (JWT_SECRET, пароли БД, API-ключи) нельзя хранить в Dockerfile по нескольким причинам:
+В данном пайплайне job `docker-build-push` представляет часть CD, так как автоматически собирает и публикует Docker-образы в реестре.
 
-- Dockerfile попадает в систему контроля версий (Git) и становится доступен всем разработчикам и в истории коммитов
-- Секреты становятся частью образа и могут быть извлечены командой docker history --no-trunc
-- Невозможно использовать разные секреты для разных окружений (dev, staging, production) без пересборки образа
+Ключевое отличие: CI фокусируется на проверке кода (тесты, компиляция), а CD — на доставке артефакта (образа, бинарного файла) в реестр или среду выполнения.
 
-Правильный подход — передавать секреты через переменные окружения (как в docker-compose.yml) или использовать Docker Secrets в Swarm/Kubernetes.
+### 2. Почему `go test` должен запускаться в пайплайне?
 
-4. Почему внутри docker-сети нельзя обращаться к другому контейнеру через localhost?
+Хотя в данном проекте не реализованы unit-тесты, в профессиональной среде их выполнение критически важно по следующим причинам:
 
-В Docker каждый контейнер имеет собственное сетевое пространство (network namespace). localhost (или 127.0.0.1) внутри контейнера ссылается только на сам этот контейнер, а не на хост-машину и не на другие контейнеры. Чтобы контейнеры могли общаться друг с другом, их нужно подключить к одной пользовательской сети и обращаться по именам сервисов (например, auth:50051). Docker Compose автоматически настраивает DNS-резолюцию между сервисами в одной сети, поэтому имена сервисов резолвятся в актуальные IP-адреса контейнеров.
+| Причина                     | Объяснение                                                             |
+| --------------------------- | ---------------------------------------------------------------------- |
+| Раннее обнаружение ошибок   | Баги выявляются в момент коммита, а не спустя дни в production.        |
+| Предотвращение регрессий    | Гарантирует, что новый код не нарушает существующую функциональность.  |
+| Живая документация          | Тесты служат исполняемой документацией ожидаемого поведения.           |
+| Уверенность в развертывании | Позволяет выполнять автоматические развертывания с гарантией качества. |
 
-5. Зачем нужен .dockerignore?
+В данном пайплайне используется `go build` как минимальная проверка компиляции, но в идеале необходимо включать `go test ./...` с проверкой покрытия.
 
-.dockerignore исключает ненужные файлы и папки из контекста сборки, который передается демону Docker при выполнении docker build. Это:
+### 3. Что такое секреты CI и почему их нельзя хранить в репозитории?
 
-- Ускоряет сборку за счет уменьшения объема данных, передаваемых демону
-- Уменьшает размер контекста сборки
-- Предотвращает случайное копирование в образ чувствительных данных (например, .git, локальных логов, бинарников, файлов с секретами)
-- Уменьшает вероятность ошибок, связанных с включением ненужных файлов в образ
-#   p z 8 - p i p e l i n e C I C D - g o  
- 
+Секреты CI — это конфиденциальные переменные, которые хранятся в зашифрованном виде в платформе CI/CD (GitHub Secrets, GitLab CI/CD Variables). Примеры: пароли, токены API, SSH-ключи, JWT-ключи.
+
+Их нельзя хранить в репозитории, потому что:
+
+| Риск                       | Последствие                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| Раскрытие в Git            | Секреты остаются видимыми в истории коммитов навсегда.                        |
+| Несанкционированный доступ | Любой с доступом к репозиторию может увидеть секреты.                         |
+| Docker-образы              | Если секреты скопированы в образ, их можно извлечь командой `docker history`. |
+| Случайная утечка           | Ошибочный коммит может сделать секреты публичными.                            |
+
+Правильный подход: использовать встроенную систему секретов платформы CI. В GitHub Actions доступ осуществляется через `${{ secrets.ИМЯ_СЕКРЕТА }}`.
+
+### 4. Почему важно версионировать Docker-образы?
+
+Версионирование Docker-образов критически важно для:
+
+| Причина           | Объяснение                                                                               |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| Прослеживаемость  | Возможность точно знать, какая версия кода выполняется в каждой среде.                   |
+| Откат (Rollback)  | Возможность вернуться к предыдущей версии при неудачном развертывании.                   |
+| Воспроизводимость | Гарантия, что один и тот же код ведет себя одинаково в разработке, staging и production. |
+| Аудит             | Возможность определить, какие изменения привели к ошибке.                                |
+
+Используемая стратегия: хеш коммита (`sha-xxxxx`) + `latest`. Это позволяет как развертывать конкретные версии (по хешу), так и быстро тестировать (`latest`).
+
+### 5. Какие риски существуют при автоматическом развертывании без ручного контроля?
+
+Автоматическое развертывание (непрерывное развертывание) имеет риски, которые необходимо снижать:
+
+| Риск                   | Описание                                                | Способы снижения                                              |
+| ---------------------- | ------------------------------------------------------- | ------------------------------------------------------------- |
+| Сбой в production      | Баг, прошедший тесты, может нарушить работу сервиса.    | Канареечные развертывания (canary), blue-green deployment.    |
+| Зависимость от CI      | При сбое пайплайна развертывание не выполняется.        | Мониторинг и алерты состояния пайплайна.                      |
+| Отсутствие утверждения | Критические изменения могут развернуться без проверки.  | Ручные утверждения для защищенных веток.                      |
+| Сложность отката       | Без версионирования откат затруднителен.                | Семантическое версионирование, хранение истории образов.      |
+| Безопасность           | Скомпрометированный секрет может дать доступ к серверу. | Регулярная ротация секретов, политика минимальных привилегий. |
+
+В данном пайплайне автоматическое развертывание на сервер не реализовано, но при его добавлении рекомендуется:
+
+- Сначала развертывать в staging-среду.
+- Использовать ручные утверждения для production.
+- Сохранять версионирование для быстрого отката.
+
+## 9. Заключение
+
+Успешно реализован пайплайн CI/CD с использованием GitHub Actions, который:
+
+- Проверяет компиляцию сервисов `auth` и `tasks` при каждом push.
+- Собирает оптимизированные Docker-образы с использованием multi-stage сборки.
+- Публикует образы в GitHub Container Registry.
+- Реализует стратегию версионирования с тегами `latest`, `<short-hash>` и `<branch-name>`.
+
+Пайплайн является воспроизводимым, безопасным (использует секреты GitHub) и полностью автоматизированным, что соответствует целям практической работы.
