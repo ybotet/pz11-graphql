@@ -42,13 +42,14 @@
       retries: 10
       start_period: 10s
 
-  tasks:
+    # ========== MÚLTIPLES RÉPLICAS DE TASKS ==========
+
+  tasks_1:
     build:
       context: ../..
       dockerfile: services/tasks/Dockerfile
-    container_name: pz7-
-    ports:
-      - 8082:8082
+    container_name: pz7-tasks-1
+    # SIN PUERTOS EXPUESTOS AL HOST (solo red interna)
     environment:
       - AUTH_GRPC_ADDR=auth:50051
       - TASKS_PORT=8082
@@ -58,19 +59,82 @@
       - DB_PASSWORD=taskspass
       - DB_NAME=tasksdb
       - DB_SSLMODE=disable
-      # ========== NUEVAS VARIABLES PARA REDIS ==========
       - REDIS_ADDR=redis:6379
       - REDIS_PASSWORD=
       - REDIS_DB=0
       - CACHE_TTL_SECONDS=120
       - CACHE_TTL_JITTER_SECONDS=30
-      # ================================================
+      - INSTANCE_ID=tasks-1 # ← NUEVO: identificador de instancia
     networks:
       - pz7-network
     depends_on:
       auth:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  tasks_2:
+    build:
+      context: ../..
+      dockerfile: services/tasks/Dockerfile
+    container_name: pz7-tasks-2
+    environment:
+      - AUTH_GRPC_ADDR=auth:50051
+      - TASKS_PORT=8082
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=tasksuser
+      - DB_PASSWORD=taskspass
+      - DB_NAME=tasksdb
+      - DB_SSLMODE=disable
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      - CACHE_TTL_SECONDS=120
+      - CACHE_TTL_JITTER_SECONDS=30
+      - INSTANCE_ID=tasks-2
+    networks:
+      - pz7-network
+    depends_on:
+      auth:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  tasks_3:
+    build:
+      context: ../..
+      dockerfile: services/tasks/Dockerfile
+    container_name: pz7-tasks-3
+    environment:
+      - AUTH_GRPC_ADDR=auth:50051
+      - TASKS_PORT=8082
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=tasksuser
+      - DB_PASSWORD=taskspass
+      - DB_NAME=tasksdb
+      - DB_SSLMODE=disable
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      - CACHE_TTL_SECONDS=120
+      - CACHE_TTL_JITTER_SECONDS=30
+      - INSTANCE_ID=tasks-3
+    networks:
+      - pz7-network
+    depends_on:
+      auth:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -103,7 +167,9 @@
     networks:
       - pz7-network
     depends_on:
-      - tasks
+      - tasks_1
+      - tasks_2
+      - tasks_3
 
 volumes:
   postgres_data:

@@ -28,12 +28,21 @@ func main() {
         authAddr = "localhost:50051"
     }
 
+    // ===== LEER IDENTIFICADOR DE INSTANCIA =====
+    instanceID := os.Getenv("INSTANCE_ID")
+    if instanceID == "" {
+        instanceID = "unknown"
+    }
+
     log := logger.New(logger.Config{
         ServiceName: "tasks",
         Environment: "development",
         LogLevel:    "debug",
         JSONFormat:  true,
     })
+
+    // Loggear qué instancia está arrancando
+    log.Printf("[INFO] Iniciando instancia: %s", instanceID)
 
     // Conectar a PostgreSQL
     db, err := repository.NewPostgresConnection()
@@ -74,10 +83,20 @@ func main() {
     // Router
     r := mux.NewRouter()
 
+    // ===== MIDDLEWARE PARA IDENTIFICAR INSTANCIA =====
+    // Este middleware se ejecuta ANTES que los demás para asegurar que la cabecera esté presente
+    instanceMiddleware := func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            w.Header().Set("X-Instance-ID", instanceID)
+            next.ServeHTTP(w, r)
+        })
+    }
+
     // Middlewares GLOBALES (en orden correcto)
+    r.Use(instanceMiddleware)                    // <-- NUEVO: primero para que la cabecera esté disponible
     r.Use(middleware.RequestID)
     r.Use(middleware.Logging(log))
-    r.Use(internalMiddleware.SecurityHeadersMiddleware) // <-- NUEVO
+    r.Use(internalMiddleware.SecurityHeadersMiddleware)
 
     // Conectar a Auth service
     authClient, err := clients.NewAuthClient(authAddr)
@@ -96,7 +115,7 @@ func main() {
         w.Write([]byte("OK"))
     }).Methods("GET")
 
-      // ===== RUTAS PROTEGIDAS =====
+    // ===== RUTAS PROTEGIDAS =====
     // GET /tasks
     r.HandleFunc("/v1/tasks", 
         authMiddleware.Authenticate(taskHandler.GetTasks)).Methods("GET")
@@ -137,8 +156,6 @@ func main() {
     }
 
 
-    log.Printf("Servidor Tasks escuchando en puerto %s", tasksPort)
+    log.Printf("Servidor Tasks (instancia: %s) escuchando en puerto %s", instanceID, tasksPort)
     log.Fatal(http.ListenAndServe(":"+tasksPort, r))
-
-
 }
